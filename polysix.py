@@ -47,17 +47,20 @@ def fileopen(fname):
 
 def getdata(fp, params):
     rawdata = fp.readframes(params.nframes)
-    data = list( struct.unpack('B' * len(rawdata), rawdata) )
     if params.sampwidth == 1:
+        data = list( struct.unpack('B' * len(rawdata), rawdata) )
         data = [x-0x80 for x in data]
+    elif params.sampwidth == 2:
+        data = list( struct.unpack('h' * (len(rawdata)//2), rawdata) )
     return (data)
 
-def readbit(data, offset, framerate):
+def readbit(data, offset, params):
     # Read a 0 or a 1 starting from data starting at data[offset].
     # Returns 0 or 1 and the length of data read.
     # 0 is of length 320us, 1 is of length 640us
-    ONELEN = math.floor(0.000320 * framerate)
-    ZEROLEN = math.floor(0.000640 * framerate)
+    ONELEN = math.floor(0.000320 * params.framerate)
+    ZEROLEN = math.floor(0.000640 * params.framerate)
+    HALFLEN = math.floor(0.000480 * params.framerate)
 
     ctr = 0
     extra = 0
@@ -75,15 +78,16 @@ def readbit(data, offset, framerate):
         else:
             # Zero crossing
             last = cur
-            if ctr >= (ONELEN - 1) and ctr <= (ONELEN + 1):
+            if (ctr >= (ONELEN - params.sampwidth) and ctr < HALFLEN):
                 return (1, ctr+extra)
-            elif ctr >= (ZEROLEN - 1) and ctr <= (ZEROLEN + 1):
+            #elif (ctr > HALFLEN and ctr <= (ZEROLEN + params.sampwidth)):
+            elif (ctr > HALFLEN):
                 return (0, ctr+extra)
             else:
                 raise Exception("Corrupt data, found peak of length {} @ idx {}".format(ctr, offset))
                 break
 
-def findstart(data, framerate):
+def findstart(data, params):
     # Finds the first meaningful zero crossing in data.
     # Skip to the first sample that is > 1 sdev away from the mean.
     sd = statistics.stdev(data)
@@ -101,62 +105,62 @@ def findstart(data, framerate):
             break
     # Now read bits until we get a 0 back
     while True:
-        (bit, length) = readbit(data, idx, framerate)
+        (bit, length) = readbit(data, idx, params)
         if bit == 0:
             return idx
         else:
             idx += length
 
 
-def readbyte(data, offset, framerate):
+def readbyte(data, offset, params):
     # Reads a byte from data starting at data[offset].
     # Each data byte has one 0 start bit and two 1 stop bits.
     # Bytes are little-endian.
     # Returns the byte read and the length of data consumed.
-    (start, length) = readbit(data, offset, framerate)
+    (start, length) = readbit(data, offset, params)
     if start != 0:
         raise Exception("Data does not start with a zero!")
 
     # Wish this was less procedural, but it'll do
     byte = 0
     idx = offset + length
-    (b0, length) = readbit(data, idx, framerate)
+    (b0, length) = readbit(data, idx, params)
     byte += b0
     idx += length
 
-    (b1, length) = readbit(data, idx, framerate)
+    (b1, length) = readbit(data, idx, params)
     byte += b1 << 1
     idx += length
 
-    (b2, length) = readbit(data, idx, framerate)
+    (b2, length) = readbit(data, idx, params)
     byte += b2 << 2
     idx += length
 
-    (b3, length) = readbit(data, idx, framerate)
+    (b3, length) = readbit(data, idx, params)
     byte += b3 << 3
     idx += length
 
-    (b4, length) = readbit(data, idx, framerate)
+    (b4, length) = readbit(data, idx, params)
     byte += b4 << 4
     idx += length
 
-    (b5, length) = readbit(data, idx, framerate)
+    (b5, length) = readbit(data, idx, params)
     byte += b5 << 5
     idx += length
 
-    (b6, length) = readbit(data, idx, framerate)
+    (b6, length) = readbit(data, idx, params)
     byte += b6 << 6
     idx += length
 
-    (b7, length) = readbit(data, idx, framerate)
+    (b7, length) = readbit(data, idx, params)
     byte += b7 << 7
     idx += length
 
-    (stop, length) = readbit(data, idx, framerate)
+    (stop, length) = readbit(data, idx, params)
     if stop != 1:
         raise Exception ("Data does not have first stop bit!")
     idx += length
-    (stop, length) = readbit(data, idx, framerate)
+    (stop, length) = readbit(data, idx, params)
     if stop != 1:
         raise Exception ("Data does not have second stop bit!")
     idx += length
@@ -165,7 +169,7 @@ def readbyte(data, offset, framerate):
 
     return (byte, (idx-offset))
 
-def readpatch(data, offset, framerate):
+def readpatch(data, offset, params):
     # Reads a Korg Polysix patch from data starting at data[offset].
     # Returns the patch as a list of 16 bytes, plus the total number
     # of bytes read. Layout follows.
@@ -198,18 +202,18 @@ def readpatch(data, offset, framerate):
     idx = offset
     patch = []
     for ctr in range(16):
-        (byte, length) = readbyte(data, idx, framerate)
+        (byte, length) = readbyte(data, idx, params)
         patch.append(byte)
         idx += length
     return (patch, idx-offset)
 
-def readnpatches(data, offset, n, framerate):
+def readnpatches(data, offset, n, params):
     # Reads n Korg Polysix patches from data starting at data[offset].
     # Returns a list of n patches and the total bytes read.
     patches = []
     idx = offset
     for ctr in range(n):
-        (patch, length) = readpatch(data, idx, framerate)
+        (patch, length) = readpatch(data, idx, params)
         patches.append(patch)
         idx += length
     return (patches, idx-offset)
@@ -319,14 +323,14 @@ def main(args):
     # Find first byte after any silence and leader tone
     if args['-v']:
         print ("Finding start of data...")
-    startidx = findstart(data, params.framerate)
+    startidx = findstart(data, params)
 
     # Header should be 0x50 0x36
     if args['-v']:
         print ("Checking for Korg header...")
-    (hdr1, length) = readbyte(data, startidx, params.framerate)
+    (hdr1, length) = readbyte(data, startidx, params)
     idx = startidx + length
-    (hdr2, length) = readbyte(data, idx, params.framerate)
+    (hdr2, length) = readbyte(data, idx, params)
     idx += length
     if hdr1 != 0x50 or hdr2 != 0x36:
         sys.stderr.write("Error: Tape header mismatch! Aborting.")
@@ -335,13 +339,13 @@ def main(args):
     # Read 32 patches from file
     if args['-v']:
         print ("Reading 32 patches from file...")
-    (patches, length) = readnpatches(data, idx, 32, params.framerate)
+    (patches, length) = readnpatches(data, idx, 32, params)
     idx += length
 
     # Read and verify checksum
     if args['-v']:
         print ("Reading and validating checksum...")
-    (tapecksum, length) = readbyte(data, idx, params.framerate)
+    (tapecksum, length) = readbyte(data, idx, params)
     cksum = checksum(patches)
     if tapecksum != cksum:
         sys.stderr.write("Warning: checksum mismatch!")
