@@ -33,19 +33,37 @@ p2.2(t-1),p2.3(t-1) - previous states of lines p2.2 and p2.3
 p2.2(t),p2.3(t) - new states of lines p2.2 and p2.3
 Vout - voltage at summing amp output
 
-   |	  t-1	   |	       t
+                  0.0033uF
+                +---||----+
+		|         |
+ ____    68k    |   22k   |
+ p2.2 --[===]---+--[===]--+
+                |         |
+ ____    200k   |  |\     |
+ p2.3 --[===]---+--|-\    |
+                   |  )---+- Vout
+		+--|+/  
+		|  |/ 
+	       ---
+	       GND
+
+   |	  t-1	   |	   t
  C |  p2.2   p2.3  |  p2.2   p2.3   Vout[V]= -22k((1-p2.2)5/68k+(1-p2.3)5/200k)
-------------------------------------------    ____    68k        22k 
- 0 |    0      0   |    1      0     -0.55    p2.2 --[===]---+--[===]--+
- 0 |    0      1   |    1      1      0                      |         |
- 0 |    1      0   |    0      0     -2.17    ____    200k   |  |\     |
- 0 |    1      1   |    0      1     -1.62    p2.3 --[===]---+--|-\    |
- 1 |    0      0   |    1      1      0                         |  )---+- Vout
- 1 |    0      1   |    1      0     -0.55                   +--|+/  
- 1 |    1      0   |    0      1     -1.62                   |  |/ 
- 1 |    1      1   |    0      0     -2.17                  ---
-                                                            GND
-The actual voltage at the "To Tape" jack is: 
+------------------------------------------   
+ 0 |    0      0   |    1      0     -0.55
+ 0 |    0      1   |    1      1      0
+ 0 |    1      0   |    0      0     -2.17
+ 0 |    1      1   |    0      1     -1.62
+ 1 |    0      0   |    1      1      0
+ 1 |    0      1   |    1      0     -0.55
+ 1 |    1      0   |    0      1     -1.62
+ 1 |    1      1   |    0      0     -2.17
+ 
+The summing amp is connected to a 0.047 uF cap and a 4.7k resistor
+before going to the back panel, where the High/Low switch further
+attenuates the output.
+
+The actual voltage at the "Tape Out" jack is:
 
  Vout |	  Vjack(H)    Vjack(L)
 ------------------------------
