@@ -273,6 +273,15 @@ def printpatch(patch, fp):
               "undefined (111)"]
     fp.write ("Effects Mode: {}\n".format(fxmode[ (patch[15] & 0b1110) >> 1 ]))
     fp.write ("Effect speed/intensity: {:.1f}\n".format(patch[0]/25.5))
+    fp.write ("\n")
+
+    fp.write ("  Patch byte #: 00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f\n")
+    fp.write ("                -----------------------------------------------\n")
+    fp.write ("Raw patch data: ")
+    fp.write ("{0[0]:02x} {0[1]:02x} {0[2]:02x} {0[3]:02x} ".format(patch))
+    fp.write ("{0[4]:02x} {0[5]:02x} {0[6]:02x} {0[7]:02x} ".format(patch))
+    fp.write ("{0[8]:02x} {0[9]:02x} {0[10]:02x} {0[11]:02x} ".format(patch))
+    fp.write ("{0[12]:02x} {0[13]:02x} {0[14]:02x} {0[15]:02x}\n".format(patch))
 
 def hexdump(patches, outfile):
     with open(outfile, 'wb') as f:
