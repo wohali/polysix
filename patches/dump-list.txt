@@ -1,0 +1,39 @@
+A1: Fat String (PWM, sub and emsemble)
+A2: EnCounter Base (by the group with the same name)
+A3: Jarre Strings, (phaser setup on deep sweep)
+A4: Synthpad
+A5: Blurlead 
+A6: Ambient 
+A7: Gary Numan "Cars"-strings
+A8: Xylofon 
+
+B1: Sharp Phased Strings
+B2: Saw-base
+B3: Squ-acid
+B4: Antiloop PWM
+B5: Autechre-sawpad
+B6: MoogBase (to be played in octave chord:ed)
+B7: Flurr burr
+B8: Paddy 
+
+C1: Old organ 1
+C2: Equinoxe-effect
+C3: Old Organ 2
+C4: Amibenta
+C5: Jarre-horn
+C6: Jarre-fatism
+C7: Choir 1
+C8: plopp lead
+
+D1: Plipp lead
+D2: Howard Jones-horn
+D3: Jarre-oxygene 7 lead      
+D4: Alphavilleism
+D5: Choir 2
+D6: hard Lead
+D7: Classic strings (listen to the Vivaldi-section played by me in the RM)
+D8: Hard Distorted base - volume low, volume pot at 12 o clock 
+                          and patch a cable from phonesout to VCF in
+
+All sounds by K. Ulfves, me96kus@ing.umu.se
+

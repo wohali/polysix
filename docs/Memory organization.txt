@@ -1,0 +1,155 @@
+Korg PolySix/Trident mk2 patch manager program
+Memory organization
+
+Written by Bojan Burkeljc (bojan.burkeljc@siol.net)
+
+
+INTERNAL RAM
+
+Flags:
+
+F0 - has two functions:
+     a) holds most significant bit of external RAM address
+        when micro is accessing it
+     b) signals micro if it needs to check Write Enable switch
+        position; this is done before micro starts to read
+        tape data 
+
+F1 - this flag holds the state of tape input as it was when
+	the input was last red by the program 
+
+Registers:
+
+All registers have more than one routine-specific uses,
+except one:
+
+bank1, r6 - holds the first byte address of external RAM to which
+	    the current patch is saved or new patch is loaded from
+
+For description of other register please read the comments along
+disassembled program code.	
+
+Other memory locations:
+
+14h - Program (number) LED states
+15h - Bank, Manual, Write LED states
+16h - Program (number) button states
+17h - Bank, Manual, Write button states
+
+20...2Fh - Patch data: this data is passed to the DAC and to
+	   synth's analog circuit. Initially this is where the
+           patch data from the external RAM is stored. If the
+           user alters a certain parameter, the corresponding
+           manual flag is set and parameter's data is constanly
+           overwritten with the manual setting (current front
+           panel setting).
+	   
+30...3Fh - Manual (current front panel) settings
+
+- - - - - - - -
+Flag registers:
+
+0C,0Dh - CV movement flags: flag is set when corresponding
+         parameter changes for more than 2, which means the
+         user have altered the parameter. After the flag is
+         set, every change of value is added to original
+         parameter value
+
+0E,0Fh - Min/Max flags register: flag set if corresponding 
+	 parameter's potentiometer is turned fully CW or
+         fully CCW.
+
+10,11h - CV manual flags: flag set if corresponding parameter
+         was altered by user, the min/max flag was set, and 
+         the parameter's potentiometer isn't in fully CW(CCW)
+         position any more. When this flag is set, the current
+         potentiometer value is directly transmitted to DAC. 
+         When Manual button is pressed, all manual flags are set.
+
+12,13h - Switch manual flags: flag set if corresponding parameter
+         was altered by user. When Manual button is pressed,
+         all manual flags are set.
+
+- - - - - - - - - - - - - 
+A side note: You might have noticed that there is a large
+  portion of reserved stack space used for registers. This
+  is because the maximum code nesting depth is only two
+  levels, so only four of the reserved 16 bytes are used
+  as stack space.
+----------------------------------------------------------
+
+EXTERNAL RAM (TC-5514):
+
+Patch organization
+Address:	Patch:
+000...00Fh	A-1
+010...01Fh	A-2
+020...02Fh	A-3
+030...03Fh	A-4
+040...04Fh	A-5
+050...05Fh	A-6
+060...06Fh	A-7
+070...07Fh	A-8
+  .  .  .  .  .  .  .
+080...0FFh	Bank B
+100...17Fh	Bank C
+180...1FFh	Bank D
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Paramater organization (PolySix):
+
+Control voltages
+Offset:
+00 	Effect Speed/Intensity
+01	VCF Cutoff
+02	EG Intensity
+03	Resonance
+04	Attack
+05	Decay
+06	Sustain
+07	Release
+08	Kbd. Tracking
+09	PW/PWM
+0A	PWM Speed
+0B	MG Frequency
+0C	MG Delay
+0D	MG Level
+
+Switches:
+0E - bit0,1 VCO Octave
+     bit2,3 VCO Waveform
+     bit4,5 Suboscillator 
+     bit6,7 Modulation
+
+0F - bit0    VCA EG/Gate switch
+     bit1..3 Effect Select
+     bit4..7 Attenuator 
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Paramater organization (Trident mk2):
+
+Control voltages
+Offset:
+00 	VCA Attack
+01	VCA Decay
+02	VCA Sustain
+03	VCA Release
+04	VCF Attack
+05	VCF Decay
+06	VCF Sustain
+07	VCF Release
+08	Cutoff
+09	EG Intensity
+0A	Detune
+0B	PW/PWM
+0C	PWM Speed
+0D	Resonance
+
+Switches
+0E - bit0,1  VCO1 Octave
+     bit2,3  VCO1 Waveform
+     bit4..7 Kbd. Tracking
+
+0F - bit0    Auto Damp
+     bit1..3 VCO2 Octave
+     bit4..7 Attenuator 
+

@@ -1,0 +1,86 @@
+Korg PolySix/Trident mk2
+Tape dump protocol
+
+Written by Bojan Burkeljc (bojan.burkeljc@siol.net)
+Updated and corrected by Joan Touzet (wohali@apache.org)
+
+
+General data:
+
+Tape data is PWM'ed: 
+"0" represented as 640us pulse,
+"1" represented as 320us pulse. 
+Each data byte has one "0" start bit and two "1" stop bits. 
+The byte itself is in little-endian order, i.e. LSB first, MSB last.
+
+For example this is what a data byte with value 36h would look like:
+
+   Strt    0x36                    2xStop
+    0   0   0  1 1  0  1 1  0   0  1 1
+   ----____----__--____--__----____--__
+
+
+Truth table for the tape output:
+Tape output is basically 4 discrete level output. It is controlled by
+two 8048 pins: p2.2 and p2.3. This are fed into summing amp to get
+those 4 discrete levels
+
+
+Signals description and behaviour:
+
+C - bit value
+p2.2(t-1),p2.3(t-1) - previous states of lines p2.2 and p2.3
+p2.2(t),p2.3(t) - new states of lines p2.2 and p2.3
+Vout - voltage at summing amp output
+
+   |	  t-1	   |	       t
+ C |  p2.2   p2.3  |  p2.2   p2.3   Vout[V]= -22k((1-p2.2)5/68k+(1-p2.3)5/200k)
+------------------------------------------    ____    68k        22k 
+ 0 |    0      0   |    1      0     -0.55    p2.2 --[===]---+--[===]--+
+ 0 |    0      1   |    1      1      0                      |         |
+ 0 |    1      0   |    0      0     -2.17    ____    200k   |  |\     |
+ 0 |    1      1   |    0      1     -1.62    p2.3 --[===]---+--|-\    |
+ 1 |    0      0   |    1      1      0                         |  )---+- Vout
+ 1 |    0      1   |    1      0     -0.55                   +--|+/  
+ 1 |    1      0   |    0      1     -1.62                   |  |/ 
+ 1 |    1      1   |    0      0     -2.17                  ---
+                                                            GND
+The actual voltage at the "To Tape" jack is: 
+
+ Vout |	  Vjack(H)    Vjack(L)
+------------------------------
+ 0    |     0	        0
+-0.55 |    -0.215      -2.5mV
+-1.62 |	   -0.632      -7.3mV
+-2.17 |	   -0.846      -9.8mV
+
+---------------------------------------------------------------------
+Tape dump routine:
+
+1.) Send "1" 10240 times (lead tone)
+
+2.) Dump string 50h,36h
+
+3.) Dump patch data (A1-A8, B1-B8, C1-C8, D1-D8), data within
+      patch follows as stored in memory (see Memory organization.txt);
+      also calculate the checksum (this is a least significant byte of
+      the sum of all data bytes) 
+
+4.) Send checksum. Note that this is NOT a 2's complement, which is
+      usual for checksums
+
+5.) Send "1" 1536 times
+
+DONE!
+---------------------------------------------------------------------
+Tape read routine:
+
+1.) Synchronize to lead tone and detect string 50h,36h
+
+2.) Read patch data and calculate checksum
+
+3.) Read checksum and compare it to calculated checksum: signal error
+	if doesn't match (note: even if error occurs, you still lose
+        all your current patches)
+
+DONE!

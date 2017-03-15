@@ -1,0 +1,39 @@
+I've disassembled this program because I was interested in
+tape dump protocol and memory organization of the external
+RAM. The result is commented assembly code and a two text
+files explaining organization and tape protocol.
+
+If one would like to make sense of it, one will still need
+a service manual for either Polysix or Trident mk2 and some
+basic knowledge of (Intel-specific) assembly code.
+
+
+About the program:
+
+First of all I must mention that this was my first MCS-48
+code I've ever seen (I did some basic coding with MCS-51,
+though), and also the very first code I've disassembled,
+therefore there might be some errors regarding my lack of
+experience.
+
+I was impressed with the program. It uses up all 8048's 
+program and data space up to the last byte, meaning that
+there was probably severe optimizing taking place to make
+it fit, yet the whole code is "spagetti-free". In fact,
+figuring out what some portion of the program does was a
+breeze since all routines are neatly organized.
+
+
+Issues:
+
+No issues at the moment (except my lack of patience for
+making better documentation ;-) ).
+
+You can mail me if you have any questions or other remarks: 
+bojan.burkeljc@siol.net
+
+Also check my site at:
+http://www.angelfire.com/geek/srlabs
+
+Bojan Burkeljc
+July 2002
