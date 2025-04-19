@@ -27,7 +27,6 @@ Notes:
   (Use sox, ffmpeg, or Audacity to convert to WAV if necessary.)
 """
 
-import audioop
 import docopt
 import math
 import statistics
